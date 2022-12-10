@@ -36,6 +36,24 @@ export class AuthController {
     }
   }
   authorization(req: Request, res: Response, next: NextFunction) {
+    let { token } = req.body
+    if (!token) {
+      res.send(buildErrorMessage(400, "Invalid token", "Unable to authorized"))
+    } else {
+      try {
+        let parsedToken = Token.parse(token);
+        fs.writeFileSync(path.resolve('./build/proof.json'), JSON.stringify(parsedToken.zkProof.proof), 'utf-8');
+        fs.writeFileSync(path.resolve('./build/public.json'), JSON.stringify(parsedToken.zkProof.public_signals), 'utf-8');
 
+        let isValid = execSync('npx snarkjs groth16 verify ./build/verification_key.json ./build/public.json ./build/proof.json');
+        if (isValid.includes("OK")) {
+          res.send(buildResponse(200, { msg: "Authorized successful" }, "Authorized"))
+          return;
+        }
+      } catch (err) {
+        res.send(buildErrorMessage(400, "Invalid token", "Unable to authorized"))
+        throw err
+      }
+    }
   }
 }
