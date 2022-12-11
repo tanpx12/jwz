@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { buildErrorMessage, buildResponse } from "../common/ResponseBuilder";
-import { Token } from "../../jwz";
+import { JWZ } from "../../jwz";
 import { execSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
@@ -19,7 +19,7 @@ export class AuthController {
 
         let isValid = execSync('npx snarkjs groth16 verify ./build/verification_key.json ./build/public.json ./build/proof.json');
         if (isValid.includes("OK")) {
-          let token = new Token(algorithm, circuitId, schema, payload);
+          let token = new JWZ(algorithm, circuitId, schema, payload);
           token.zkProof = {
             proof: proof,
             public_signals: public_signals
@@ -41,7 +41,9 @@ export class AuthController {
       res.send(buildErrorMessage(400, "Invalid token", "Unable to authorized"))
     } else {
       try {
-        let parsedToken = Token.parse(token);
+        let parsedToken = JWZ.parse(token);
+        console.log(parsedToken.zkProof.public_signals);
+
         fs.writeFileSync(path.resolve('./build/proof.json'), JSON.stringify(parsedToken.zkProof.proof), 'utf-8');
         fs.writeFileSync(path.resolve('./build/public.json'), JSON.stringify(parsedToken.zkProof.public_signals), 'utf-8');
 

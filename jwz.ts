@@ -17,7 +17,7 @@ export interface Header {
   iat: number
 }
 
-export class Token {
+export class JWZ {
   zkProof: ZKProof = {} as ZKProof;
   header: Header;
   payload: string;
@@ -31,7 +31,7 @@ export class Token {
     this.payload = _payload;
   }
 
-  static parse(base64Token: string): Token {
+  static parse(base64Token: string): JWZ {
     let part = base64Token.split(".");
     if (part.length != 3) {
       throw Error("Token must contain 3 part");
@@ -40,7 +40,7 @@ export class Token {
       let header = JSON.parse(Buffer.from(part[0], 'base64').toString('utf-8'));
       let payload = Buffer.from(part[1], 'base64').toString('utf-8');
       let zkp = JSON.parse(Buffer.from(part[2], 'base64').toString('utf-8'));
-      let token = new Token(header.algorithm, header.circuitId, header.schema, payload);
+      let token = new JWZ(header.algorithm, header.circuitId, header.schema, payload);
       token.zkProof = zkp;
       return token
     }
@@ -56,5 +56,12 @@ export class Token {
       let base64ZKP = Buffer.from(JSON.stringify(this.zkProof), 'utf-8').toString('base64');
       return base64Header + "." + base64Payload + "." + base64ZKP;
     }
+  }
+
+  verifyPubSig(value: BigInt): boolean {
+    if (BigInt(this.zkProof.public_signals[7]) != value) {
+      return false;
+    } else
+      return true
   }
 }
