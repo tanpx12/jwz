@@ -1,3 +1,6 @@
+//ts-ignore
+const snarkjs = require('snarkjs');
+
 export interface Proof {
   pi_a: string[],
   pi_b: string[][],
@@ -45,7 +48,10 @@ export class JWZ {
       return token
     }
   }
-
+  /**
+   * Compress the JWZ to a base64 format token
+   * @returns 
+   */
   compress(): string {
     if (!this.header || !this.payload || !this.zkProof) {
       throw Error("Missing component")
@@ -63,5 +69,22 @@ export class JWZ {
       return false;
     } else
       return true
+  }
+
+  /**
+   * Verify the correctness of the zkp
+   * @param verification_key 
+   * @returns 
+   */
+  async verify(verification_key: Object): Promise<boolean> {
+    if (!this.zkProof.proof || !this.zkProof.public_signals) {
+      throw Error("Invalid zkProof");
+    } else {
+      try {
+        return await snarkjs.groth16.verify(verification_key, this.zkProof.public_signals, this.zkProof.proof);
+      } catch (err) {
+        throw err
+      }
+    }
   }
 }

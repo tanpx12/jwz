@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { buildErrorMessage, buildResponse } from "../common/ResponseBuilder";
 import { JWZ } from "../../jwz";
-import { verifyProof } from "../services/verifyToken";
 import fs from 'fs'
 import path from 'path'
 
@@ -11,27 +10,26 @@ export class AuthController {
   async authentication(req: Request, res: Response, next: NextFunction) {
     let { proof, public_signals, circuitId, schema, algorithm, payload } = req.body;
     if (!circuitId || !proof || !public_signals || !schema || !algorithm || !payload) {
-      res.send(buildErrorMessage(400, "Invalid request", "Unable to authenticated"))
+      res.send(buildErrorMessage(400, "Invalid request", "Unable to login"))
       return;
     }
     else {
       try {
-
-        let isValid = await verifyProof(vk, public_signals, proof)
+        let token = new JWZ(algorithm, circuitId, schema, payload);
+        token.zkProof = {
+          proof: proof,
+          public_signals: public_signals
+        }
+        let isValid = await token.verify(vk)
         if (isValid) {
-          let token = new JWZ(algorithm, circuitId, schema, payload);
-          token.zkProof = {
-            proof: proof,
-            public_signals: public_signals
-          }
           let compressedToken = token.compress();
-          res.send(buildResponse(200, { token: compressedToken }, "Authenticated"))
+          res.send(buildResponse(200, { token: compressedToken }, "Login successful"))
           return;
         } else {
-          res.send(buildErrorMessage(400, "Invalid proof", "Unable to authenticated"))
+          res.send(buildErrorMessage(400, "Invalid proof", "Unable to login"))
         }
       } catch (err) {
-        res.send(buildErrorMessage(400, "Invalid proof", "Unable to authenticated"))
+        res.send(buildErrorMessage(400, "Invalid proof", "Unable to login"))
         throw err;
       }
 
@@ -44,7 +42,7 @@ export class AuthController {
     } else {
       try {
         let parsedToken = JWZ.parse(token);
-        let isValid = await verifyProof(vk, parsedToken.zkProof.public_signals, parsedToken.zkProof.proof);
+        let isValid = await parsedToken.verify(vk);
         if (isValid) {
           res.send(buildResponse(200, { msg: "Authorized successful" }, "Authorized"))
           return;
