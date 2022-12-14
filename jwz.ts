@@ -64,11 +64,11 @@ export class JWZ {
     }
   }
 
-  verifyPubSig(value: BigInt): boolean {
-    if (BigInt(this.zkProof.public_signals[7]) != value) {
-      return false;
+  compareValue(value: string): boolean {
+    if (this.zkProof.public_signals[7] == value) {
+      return true;
     } else
-      return true
+      return false
   }
 
   /**
@@ -85,6 +85,17 @@ export class JWZ {
       } catch (err) {
         throw err
       }
+    }
+  }
+
+  compareSchemaHash(_schemaHash: string): boolean {
+    if (!this.zkProof.proof || !this.zkProof.public_signals) {
+      throw Error("Invalid zkProof")
+    } else {
+      const schemaHash = BigInt("0b" + BigInt(this.zkProof.public_signals[6]).toString(2).slice(64, 192)).toString();
+      if (schemaHash == _schemaHash)
+        return true;
+      else return false;
     }
   }
 }

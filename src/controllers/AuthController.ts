@@ -5,6 +5,11 @@ import fs from 'fs'
 import path from 'path'
 
 let vk = JSON.parse(fs.readFileSync(path.resolve("./build/verification_key.json"), 'utf-8'))
+enum Role {
+  Admin = "1",
+  Operator = "2"
+}
+
 
 export class AuthController {
   async authentication(req: Request, res: Response, next: NextFunction) {
@@ -42,6 +47,10 @@ export class AuthController {
     } else {
       try {
         let parsedToken = JWZ.parse(token);
+        if (!parsedToken.compareValue(Role.Admin) || !parsedToken.compareSchemaHash("123456")) {
+          res.send(buildErrorMessage(401, "Invalid token", "Unauthorized"))
+          return;
+        }
         let isValid = await parsedToken.verify(vk);
         if (isValid) {
           res.send(buildResponse(200, { msg: "Authorized successful" }, "Authorized"))
@@ -49,6 +58,7 @@ export class AuthController {
         }
         else {
           res.send(buildErrorMessage(401, "Invalid token", "Unauthorized"))
+          return;
         }
       } catch (err) {
         res.send(buildErrorMessage(401, "Invalid token", "Unauthorized"))
