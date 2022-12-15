@@ -1,3 +1,5 @@
+import e from "express";
+
 //ts-ignore
 const snarkjs = require('snarkjs');
 
@@ -17,7 +19,6 @@ export interface Header {
   algorithm: string,
   circuitId: string,
   schema: string,
-  iat: number
 }
 
 export class JWZ {
@@ -29,7 +30,6 @@ export class JWZ {
       algorithm: _algorithm,
       circuitId: _circuitId,
       schema: _schema,
-      iat: Date.now()
     };
     this.payload = _payload;
   }
@@ -64,12 +64,22 @@ export class JWZ {
     }
   }
 
+  async verifyToken(verification_key: Object, _value: string, _schemaHash: string, _issuerID: string, timeLimit: number): boolean {
+    if (!this.zkProof.proof || !this.zkProof.public_signals) {
+      throw Error("Invalid zkProof");
+    }
+    else {
+      if (!(await this.verifyProof(verification_key)) || !this.verifyExpiration(timeLimit) || !this.verifyPubSig(_value, _schemaHash, _issuerID)) {
+        return false;
+      } else return true;
+    }
+  }
   /**
      * Verify the correctness of the zkp
      * @param verification_key 
      * @returns 
      */
-  async verify(verification_key: Object): Promise<boolean> {
+  async verifyProof(verification_key: Object): Promise<boolean> {
     if (!this.zkProof.proof || !this.zkProof.public_signals) {
       throw Error("Invalid zkProof");
     } else {
@@ -90,6 +100,17 @@ export class JWZ {
       if (_schemaHash != schemaHash || this.zkProof.public_signals[7] != _value || this.zkProof.public_signals[4] != _issuerID) {
         return false;
       }
+      else return true;
+    }
+  }
+
+  verifyExpiration(timeLimit: number): boolean {
+    if (!this.zkProof.proof || !this.zkProof.public_signals) {
+      throw Error("Invalid zkProof")
+    } else {
+      const createdAt = BigInt("0b" + BigInt(this.zkProof.public_signals[6]).toString(2).slice(0, 64))
+      if (createdAt - BigInt(Date.now()) > BigInt(timeLimit))
+        return false;
       else return true;
     }
   }

@@ -25,7 +25,7 @@ export class AuthController {
           proof: proof,
           public_signals: public_signals
         }
-        let isValid = await token.verify(vk)
+        let isValid = await token.verifyProof(vk)
         if (isValid) {
           let compressedToken = token.compress();
           res.send(buildResponse(200, { token: compressedToken }, "Login successful"))
@@ -47,11 +47,8 @@ export class AuthController {
     } else {
       try {
         let parsedToken = JWZ.parse(token);
-        if (!parsedToken.verifyPubSig(Role.Admin, "123456", "12345678")) {
-          res.send(buildErrorMessage(401, "Invalid token", "Unauthorized"))
-          return;
-        }
-        let isValid = await parsedToken.verify(vk);
+
+        let isValid = parsedToken.verifyToken(vk, Role.Admin, "123456", "123456", 3600000)
         if (isValid) {
           res.send(buildResponse(200, { msg: "Authorized successful" }, "Authorized"))
           return;
