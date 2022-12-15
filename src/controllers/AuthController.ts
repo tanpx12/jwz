@@ -47,7 +47,7 @@ export class AuthController {
     } else {
       try {
         let parsedToken = JWZ.parse(token);
-        if (!parsedToken.compareValue(Role.Admin) || !parsedToken.compareSchemaHash("123456")) {
+        if (!parsedToken.verifyPubSig(Role.Admin, "123456", "12345678")) {
           res.send(buildErrorMessage(401, "Invalid token", "Unauthorized"))
           return;
         }

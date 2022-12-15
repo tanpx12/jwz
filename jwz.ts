@@ -64,18 +64,11 @@ export class JWZ {
     }
   }
 
-  compareValue(value: string): boolean {
-    if (this.zkProof.public_signals[7] == value) {
-      return true;
-    } else
-      return false
-  }
-
   /**
-   * Verify the correctness of the zkp
-   * @param verification_key 
-   * @returns 
-   */
+     * Verify the correctness of the zkp
+     * @param verification_key 
+     * @returns 
+     */
   async verify(verification_key: Object): Promise<boolean> {
     if (!this.zkProof.proof || !this.zkProof.public_signals) {
       throw Error("Invalid zkProof");
@@ -88,14 +81,16 @@ export class JWZ {
     }
   }
 
-  compareSchemaHash(_schemaHash: string): boolean {
+  verifyPubSig(_value: string, _schemaHash: string, _issuerID: string): boolean {
     if (!this.zkProof.proof || !this.zkProof.public_signals) {
       throw Error("Invalid zkProof")
-    } else {
+    }
+    else {
       const schemaHash = BigInt("0b" + BigInt(this.zkProof.public_signals[6]).toString(2).slice(64, 192)).toString();
-      if (schemaHash == _schemaHash)
-        return true;
-      else return false;
+      if (_schemaHash != schemaHash || this.zkProof.public_signals[7] != _value || this.zkProof.public_signals[4] != _issuerID) {
+        return false;
+      }
+      else return true;
     }
   }
 }
