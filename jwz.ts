@@ -64,6 +64,14 @@ export class JWZ {
     }
   }
 
+  getIssuer(): string {
+    if (!this.zkProof.proof || !this.zkProof.public_signals) {
+      throw Error("Invalid zkProof");
+    } else {
+      return this.zkProof.public_signals[4];
+    }
+  }
+
   async verifyToken(verification_key: Object, _value: string, _schemaHash: string, _issuerID: string, timeLimit: number): Promise<boolean> {
     if (!this.zkProof.proof || !this.zkProof.public_signals) {
       throw Error("Invalid zkProof");
@@ -114,4 +122,5 @@ export class JWZ {
       else return true;
     }
   }
+
 }
