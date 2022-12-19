@@ -64,7 +64,7 @@ export class JWZ {
     }
   }
 
-  async verifyToken(verification_key: Object, _value: string, _schemaHash: string, _issuerID: string, timeLimit: number): boolean {
+  async verifyToken(verification_key: Object, _value: string, _schemaHash: string, _issuerID: string, timeLimit: number): Promise<boolean> {
     if (!this.zkProof.proof || !this.zkProof.public_signals) {
       throw Error("Invalid zkProof");
     }

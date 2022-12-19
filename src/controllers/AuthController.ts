@@ -10,7 +10,6 @@ enum Role {
   Operator = "2"
 }
 
-
 export class AuthController {
   async authentication(req: Request, res: Response, next: NextFunction) {
     let { proof, public_signals, circuitId, schema, algorithm, payload } = req.body;
@@ -37,7 +36,6 @@ export class AuthController {
         res.send(buildErrorMessage(400, "Invalid proof", "Unable to login"))
         throw err;
       }
-
     }
   }
   async authorization(req: Request, res: Response, next: NextFunction) {
@@ -48,7 +46,7 @@ export class AuthController {
       try {
         let parsedToken = JWZ.parse(token);
 
-        let isValid = parsedToken.verifyToken(vk, Role.Admin, "123456", "123456", 3600000)
+        let isValid = await parsedToken.verifyToken(vk, Role.Admin, "123456", "123456", 3600000)
         if (isValid) {
           res.send(buildResponse(200, { msg: "Authorized successful" }, "Authorized"))
           return;
